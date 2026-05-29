@@ -1,0 +1,181 @@
+// SaaSVoice Prisma schema (Prisma 6, PostgreSQL)
+// Dev:  npm run db:migrate   Prod: npm run db:deploy
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Auth (Auth.js / NextAuth v5 — Credentials + Prisma adapter)
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String  @id @default(cuid())
+  name         String?
+  email        String  @unique
+  passwordHash String?
+  image        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  productProfiles ProductProfile[]
+  productUpdates  ProductUpdate[]
+  generatedPosts  GeneratedPost[]
+  usages          Usage[]
+  integrations    FutureIntegration[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ---------------------------------------------------------------------------
+// Domain models
+// ---------------------------------------------------------------------------
+
+model ProductProfile {
+  id                  String  @id @default(cuid())
+  userId              String
+  productName         String
+  websiteUrl          String?
+  shortDescription    String  @db.Text
+  targetAudience      String
+  category            String // SaaS | Devtool | AI tool | Marketplace | Productivity | Cybersecurity | API / Infrastructure | Other
+  founderTone         String // Technical founder | Casual builder | ...
+  writingStyleNotes   String? @db.Text
+  bannedWords         String? @db.Text
+  preferredPostLength String  @default("medium") // short | medium | long
+  defaultPlatform     String  @default("Both") // X | LinkedIn | Both
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productUpdates ProductUpdate[]
+  generatedPosts GeneratedPost[]
+
+  @@index([userId])
+}
+
+model ProductUpdate {
+  id               String  @id @default(cuid())
+  userId           String
+  productProfileId String
+  title            String
+  updateType       String // Feature shipped | Bug fixed | Lesson learned | ...
+  rawNotes         String  @db.Text
+  importance       String  @default("medium") // low | medium | high
+  includeLink      Boolean @default(false)
+  linkUrl          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productProfile ProductProfile  @relation(fields: [productProfileId], references: [id], onDelete: Cascade)
+  generatedPosts GeneratedPost[]
+
+  @@index([userId])
+  @@index([productProfileId])
+}
+
+model GeneratedPost {
+  id                  String    @id @default(cuid())
+  userId              String
+  productProfileId    String
+  productUpdateId     String
+  variantName         String
+  platform            String // X | LinkedIn
+  text                String    @db.Text
+  hook                String    @db.Text
+  hashtags            Json      @default("[]")
+  estimatedCharacters Int       @default(0)
+  aiGenericScore      Int       @default(0) // 0-100, higher = more generic/AI-like
+  humanScore          Int       @default(0) // 0-100, higher = more human
+  reasoning           String    @db.Text
+  warnings            Json      @default("[]")
+  status              String    @default("draft") // draft | approved | queued | posted_manually | archived
+  plannedAt           DateTime?
+  copiedAt            DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productProfile ProductProfile @relation(fields: [productProfileId], references: [id], onDelete: Cascade)
+  productUpdate  ProductUpdate  @relation(fields: [productUpdateId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([productUpdateId])
+  @@index([status])
+}
+
+model Usage {
+  id                  String @id @default(cuid())
+  userId              String
+  monthKey            String // e.g. "2026-05"
+  generatedPostsCount Int    @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, monthKey])
+  @@index([userId])
+}
+
+model FutureIntegration {
+  id       String @id @default(cuid())
+  userId   String
+  provider String // x | linkedin | ...
+  status   String @default("coming_later") // coming_later | requested | connected
+  metadata Json   @default("{}")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, provider])
+  @@index([userId])
+}
