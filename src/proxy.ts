@@ -1,8 +1,9 @@
 import NextAuth from "next-auth";
 import { authConfig } from "@/lib/auth.config";
 
-// Edge-safe NextAuth instance (no Prisma/bcrypt) just for route protection.
-export const { auth: middleware } = NextAuth(authConfig);
+// Next 16 renamed the `middleware` convention to `proxy`. This runs the
+// edge-safe NextAuth instance (no Prisma/bcrypt) to protect routes.
+export const { auth: proxy } = NextAuth(authConfig);
 
 export const config = {
   // Run on everything except static assets and API routes.
