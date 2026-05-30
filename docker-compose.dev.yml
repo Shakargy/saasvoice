@@ -1,0 +1,23 @@
+# Local development database only. The app runs on the host via `npm run dev`.
+# Full app + db production compose lands in the Docker phase.
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: saasvoice-db-dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: saasvoice
+      POSTGRES_PASSWORD: saasvoice
+      POSTGRES_DB: saasvoice
+    ports:
+      - "5432:5432"
+    volumes:
+      - saasvoice_dev_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U saasvoice"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  saasvoice_dev_pgdata:

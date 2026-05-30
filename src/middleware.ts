@@ -1,0 +1,10 @@
+import NextAuth from "next-auth";
+import { authConfig } from "@/lib/auth.config";
+
+// Edge-safe NextAuth instance (no Prisma/bcrypt) just for route protection.
+export const { auth: middleware } = NextAuth(authConfig);
+
+export const config = {
+  // Run on everything except static assets and API routes.
+  matcher: ["/((?!api|_next/static|_next/image|favicon.ico|.*\\.svg).*)"],
+};
