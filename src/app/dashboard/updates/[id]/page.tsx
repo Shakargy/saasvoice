@@ -6,12 +6,15 @@ import { ArrowLeft, Sparkles, LinkIcon } from "lucide-react";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getUsageSummary } from "@/lib/usage";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { UpdateDialog } from "@/components/dashboard/update-dialog";
 import { DeleteUpdateButton } from "@/components/dashboard/delete-update-button";
+import { GenerateButton } from "@/components/dashboard/generate-button";
+import { PostCard, type PostView } from "@/components/posts/post-card";
 import type { ProductUpdateFormValues } from "@/lib/validators/product-update";
 
 export const metadata: Metadata = { title: "Update" };
@@ -27,6 +30,14 @@ export default async function UpdateDetailPage({
 
   const update = await prisma.productUpdate.findUnique({ where: { id } });
   if (!update || update.userId !== userId) notFound();
+
+  const [posts, usage] = await Promise.all([
+    prisma.generatedPost.findMany({
+      where: { productUpdateId: id, userId },
+      orderBy: [{ humanScore: "desc" }, { createdAt: "desc" }],
+    }),
+    getUsageSummary(userId),
+  ]);
 
   const initial = {
     id: update.id,
@@ -109,16 +120,31 @@ export default async function UpdateDetailPage({
               <p className="text-muted-foreground text-xs">
                 Turn these notes into 5 scored variations.
               </p>
-              <Button className="w-full" disabled>
-                <Sparkles /> Generate posts
-              </Button>
+              <GenerateButton updateId={update.id} reached={usage.reached} />
               <p className="text-muted-foreground text-xs">
-                Arriving in the next build phase.
+                {usage.remaining} of {usage.limit} runs left this month.
               </p>
             </CardContent>
           </Card>
         </div>
       </div>
+
+      {/* Generated posts */}
+      {posts.length > 0 && (
+        <div className="mt-8 space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-xl font-bold tracking-tight">
+              Generated posts
+            </h2>
+            <Badge variant="secondary">{posts.length}</Badge>
+          </div>
+          <div className="grid gap-4">
+            {posts.map((p) => (
+              <PostCard key={p.id} post={p as unknown as PostView} />
+            ))}
+          </div>
+        </div>
+      )}
     </>
   );
 }
