@@ -32,16 +32,21 @@ export function ProductUpdateForm({
   initial,
   onDone,
   embedded,
+  createMode,
 }: {
   initial?: UpdateRecord | null;
   onDone?: () => void;
   /** Reserved for embedded contexts (onboarding). Currently same behaviour. */
   embedded?: boolean;
+  /** Force create (POST) even when `initial` is provided — used for prefills
+   *  like GitHub import where `initial` carries data but no real record id. */
+  createMode?: boolean;
 }) {
   void embedded;
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
-  const isEdit = !!initial;
+  // Edit only when we have a real record id and aren't in explicit create mode.
+  const isEdit = !!initial && !!initial.id && !createMode;
 
   const {
     register,

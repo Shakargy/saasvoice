@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/dashboard/page-header";
 import { EmptyState } from "@/components/dashboard/empty-state";
 import { UpdateDialog } from "@/components/dashboard/update-dialog";
+import { GithubImportDialog } from "@/components/dashboard/github-import-dialog";
 
 export const metadata: Metadata = { title: "Updates" };
 
@@ -52,15 +53,25 @@ export default async function UpdatesPage() {
       <PageHeader
         title="Product updates"
         description="Raw notes you can turn into posts."
-        action={<UpdateDialog />}
+        action={
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <GithubImportDialog />
+            <UpdateDialog />
+          </div>
+        }
       />
 
       {updates.length === 0 ? (
         <EmptyState
           icon={FileText}
           title="No updates yet"
-          description="Add your first update — a shipped feature, a bug fix, a lesson, a metric — and generate posts from it."
-          action={<UpdateDialog />}
+          description="Add one manually, or import a commit straight from a public GitHub repo."
+          action={
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <GithubImportDialog />
+              <UpdateDialog />
+            </div>
+          }
         />
       ) : (
         <div className="space-y-3">
