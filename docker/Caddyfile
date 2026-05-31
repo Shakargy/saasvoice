@@ -1,0 +1,9 @@
+# Caddy reverse proxy with automatic HTTPS (Let's Encrypt).
+# DOMAIN_NAME is provided by docker-compose from your .env.
+# Caddy obtains and renews the TLS certificate automatically once the domain's
+# DNS points at this VM and ports 80/443 are open.
+
+{$DOMAIN_NAME} {
+	encode gzip
+	reverse_proxy app:3000
+}

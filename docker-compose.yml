@@ -1,0 +1,80 @@
+# ---------------------------------------------------------------------------
+# SaaSVoice production stack for a single small VM (e.g. GCP e2-micro).
+#
+#   cp .env.example .env   # then fill in real values (never commit .env)
+#   docker compose up -d --build
+#
+# Postgres data persists in a named volume on the VM's disk.
+# The optional `proxy` (Caddy, TLS) is behind a profile so HTTP-only works too.
+# ---------------------------------------------------------------------------
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-saasvoice}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-saasvoice}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-saasvoice}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # Keep Postgres modest on a 1GB VM.
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      # Compose the DB URL from the same parts as the db service.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-saasvoice}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-saasvoice}?schema=public
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:?set NEXTAUTH_SECRET in .env}
+      AUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash}
+      FREE_MONTHLY_GENERATIONS: ${FREE_MONTHLY_GENERATIONS:-30}
+    ports:
+      # Exposed directly for HTTP-only setups. With the proxy, you can drop this.
+      - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  # Optional reverse proxy with automatic Let's Encrypt TLS.
+  # Enable with:  docker compose --profile proxy up -d
+  # Requires a domain pointed at the VM and DOMAIN_NAME set in .env.
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    profiles: ["proxy"]
+    depends_on:
+      - app
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME:?set DOMAIN_NAME in .env to use the proxy}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

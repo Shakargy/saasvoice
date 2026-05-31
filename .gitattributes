@@ -1,0 +1,10 @@
+# Normalize line endings. Shell scripts MUST be LF or they fail in Linux
+# containers ("no such file or directory" on the shebang).
+* text=auto eol=lf
+*.sh text eol=lf
+Dockerfile text eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
