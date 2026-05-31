@@ -6,6 +6,10 @@ import type { NextAuthConfig } from "next-auth";
  * which needs the database, is added in `auth.ts`.
  */
 export const authConfig = {
+  // We self-host behind our own reverse proxy (Caddy) on a single VM, so the
+  // incoming Host header is trusted. Without this, NextAuth v5 throws
+  // "UntrustedHost" in production (it only auto-trusts in dev).
+  trustHost: true,
   pages: {
     signIn: "/login",
   },
