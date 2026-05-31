@@ -36,18 +36,18 @@ RUN addgroup --system --gid 1001 nodejs \
   && adduser --system --uid 1001 nextjs
 
 # Standalone server + static assets + public dir.
-# The standalone bundle already includes the Prisma client + query engine
-# (node_modules/.prisma/client, @prisma/client) needed at runtime.
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# For running `prisma migrate deploy` on boot we add the Prisma CLI and its
-# engines on top of the standalone node_modules. (We call it via node, so no
-# .bin symlink is needed.)
+# Overlay the FULL node_modules from the builder on top of the standalone's
+# trimmed one. It's a strict superset, so the runtime client still works AND
+# the Prisma CLI (+ all its transitive deps) is present for `migrate deploy`.
+# Cherry-picking @prisma/* sub-packages is fragile — engines pulls in config,
+# get-platform, etc. — so we copy the whole tree. (Built on the VM, not pushed
+# to a registry, so the extra size is fine.)
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma/engines ./node_modules/@prisma/engines
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
 # Entrypoint runs migrations, then boots the server.
 COPY --chown=nextjs:nodejs docker/entrypoint.sh ./entrypoint.sh
