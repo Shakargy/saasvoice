@@ -30,10 +30,14 @@ type UpdateRecord = ProductUpdateFormValues & { id: string };
 export function ProductUpdateForm({
   initial,
   onDone,
+  embedded,
 }: {
   initial?: UpdateRecord | null;
   onDone?: () => void;
+  /** Reserved for embedded contexts (onboarding). Currently same behaviour. */
+  embedded?: boolean;
 }) {
+  void embedded;
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const isEdit = !!initial;

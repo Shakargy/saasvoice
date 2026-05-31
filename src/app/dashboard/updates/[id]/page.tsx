@@ -97,18 +97,23 @@ export default async function UpdateDetailPage({
             </CardContent>
           </Card>
 
-          <Card className="border-accent/30 bg-accent/5">
-            <CardContent className="space-y-3 text-center">
-              <Sparkles className="mx-auto size-6 text-accent" />
-              <p className="text-sm font-medium">Generate founder-style posts</p>
+          <Card className="glow-accent border-accent/30 relative overflow-hidden">
+            <div className="blob bg-accent top-[-2rem] right-0 h-32 w-32 opacity-40" />
+            <CardContent className="relative space-y-3 text-center">
+              <span className="bg-gradient-accent mx-auto flex size-12 items-center justify-center rounded-2xl shadow-md">
+                <Sparkles className="size-6 text-accent-foreground" />
+              </span>
+              <p className="font-display text-base font-semibold">
+                Generate founder posts
+              </p>
               <p className="text-muted-foreground text-xs">
-                Turn these notes into 5 post variations with anti-AI scoring.
+                Turn these notes into 5 scored variations.
               </p>
               <Button className="w-full" disabled>
                 <Sparkles /> Generate posts
               </Button>
               <p className="text-muted-foreground text-xs">
-                Coming in the next build phase.
+                Arriving in the next build phase.
               </p>
             </CardContent>
           </Card>

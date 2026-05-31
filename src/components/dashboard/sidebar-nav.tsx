@@ -39,13 +39,18 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             href={item.href}
             onClick={onNavigate}
             className={cn(
-              "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+              "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-all",
               active
-                ? "bg-accent/15 text-accent font-medium"
+                ? "bg-accent/15 text-accent font-semibold"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
             )}
           >
-            <item.icon className="size-4" />
+            <item.icon
+              className={cn(
+                "size-4 transition-transform group-hover:scale-110",
+                active && "scale-110"
+              )}
+            />
             {item.label}
           </Link>
         );

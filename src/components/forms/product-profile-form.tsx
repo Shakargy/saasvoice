@@ -34,8 +34,14 @@ type ProfileRecord = ProductProfileFormValues & { id: string };
 
 export function ProductProfileForm({
   initial,
+  onCreated,
+  embedded,
 }: {
   initial?: ProfileRecord | null;
+  /** Called after a successful create (used by the onboarding wizard). */
+  onCreated?: () => void;
+  /** When true, skip navigation and let the parent drive next steps. */
+  embedded?: boolean;
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -79,6 +85,11 @@ export function ProductProfileForm({
         return;
       }
       toast.success(isEdit ? "Profile updated." : "Product profile created.");
+      if (embedded) {
+        onCreated?.();
+        router.refresh();
+        return;
+      }
       router.push("/dashboard/product");
       router.refresh();
     } finally {
