@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { prisma } from "@/lib/db";
-import { requireUserId, UnauthorizedError } from "@/lib/security";
+import { handler, readJson, requireUserId } from "@/lib/api";
 import { productUpdateSchema } from "@/lib/validators/product-update";
 
 async function getOwnedUpdate(id: string, userId: string) {
@@ -10,11 +10,8 @@ async function getOwnedUpdate(id: string, userId: string) {
   return update;
 }
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const GET = handler(
+  async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
     const userId = await requireUserId();
     const { id } = await params;
     const update = await getOwnedUpdate(id, userId);
@@ -26,19 +23,11 @@ export async function GET(
       orderBy: { createdAt: "desc" },
     });
     return NextResponse.json({ update, posts });
-  } catch (err) {
-    if (err instanceof UnauthorizedError) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    throw err;
   }
-}
+);
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const PATCH = handler(
+  async (request: Request, { params }: { params: Promise<{ id: string }> }) => {
     const userId = await requireUserId();
     const { id } = await params;
     const update = await getOwnedUpdate(id, userId);
@@ -46,7 +35,7 @@ export async function PATCH(
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const body = await request.json().catch(() => null);
+    const body = await readJson(request);
     const parsed = productUpdateSchema.partial().safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
@@ -60,19 +49,11 @@ export async function PATCH(
       data: parsed.data,
     });
     return NextResponse.json({ update: updated });
-  } catch (err) {
-    if (err instanceof UnauthorizedError) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    throw err;
   }
-}
+);
 
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  try {
+export const DELETE = handler(
+  async (_request: Request, { params }: { params: Promise<{ id: string }> }) => {
     const userId = await requireUserId();
     const { id } = await params;
     const update = await getOwnedUpdate(id, userId);
@@ -81,10 +62,5 @@ export async function DELETE(
     }
     await prisma.productUpdate.delete({ where: { id } });
     return NextResponse.json({ ok: true });
-  } catch (err) {
-    if (err instanceof UnauthorizedError) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    throw err;
   }
-}
+);

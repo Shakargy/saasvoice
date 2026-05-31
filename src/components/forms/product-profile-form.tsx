@@ -28,6 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiSend } from "@/lib/client";
 import { Field } from "./field";
 
 type ProfileRecord = ProductProfileFormValues & { id: string };
@@ -71,17 +72,13 @@ export function ProductProfileForm({
   async function onSubmit(values: ProductProfileInput) {
     setSubmitting(true);
     try {
-      const res = await fetch(
+      const { ok, data } = await apiSend<{ error?: string }>(
         isEdit ? `/api/product-profile/${initial!.id}` : "/api/product-profile",
-        {
-          method: isEdit ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        }
+        isEdit ? "PATCH" : "POST",
+        values
       );
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Could not save profile.");
+      if (!ok) {
+        toast.error(data?.error ?? "Could not save profile.");
         return;
       }
       toast.success(isEdit ? "Profile updated." : "Product profile created.");

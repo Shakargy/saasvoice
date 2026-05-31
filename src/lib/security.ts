@@ -1,27 +1,8 @@
-import { auth } from "@/lib/auth";
-
-/**
- * Returns the current user's id, or throws an UnauthorizedError. Use this in
- * route handlers and server actions to gate access.
- */
-export class UnauthorizedError extends Error {
-  constructor() {
-    super("Unauthorized");
-    this.name = "UnauthorizedError";
-  }
-}
-
-export async function requireUserId(): Promise<string> {
-  const session = await auth();
-  if (!session?.user?.id) {
-    throw new UnauthorizedError();
-  }
-  return session.user.id;
-}
-
 /**
  * Very small in-memory rate limiter. Good enough for a single-VM MVP; not a
- * distributed limiter. Keyed by an arbitrary string (e.g. `userId:action`).
+ * distributed limiter. Keyed by an arbitrary string (e.g. `ip:action`).
+ *
+ * For auth + ownership helpers see `@/lib/api`.
  */
 const hits = new Map<string, { count: number; resetAt: number }>();
 

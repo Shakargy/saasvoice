@@ -23,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { apiSend } from "@/lib/client";
 import { Field } from "./field";
 
 type UpdateRecord = ProductUpdateFormValues & { id: string };
@@ -62,17 +63,13 @@ export function ProductUpdateForm({
   async function onSubmit(values: ProductUpdateInput) {
     setSubmitting(true);
     try {
-      const res = await fetch(
+      const { ok, data } = await apiSend<{ error?: string }>(
         isEdit ? `/api/updates/${initial!.id}` : "/api/updates",
-        {
-          method: isEdit ? "PATCH" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(values),
-        }
+        isEdit ? "PATCH" : "POST",
+        values
       );
-      const data = await res.json();
-      if (!res.ok) {
-        toast.error(data.error ?? "Could not save update.");
+      if (!ok) {
+        toast.error(data?.error ?? "Could not save update.");
         return;
       }
       toast.success(isEdit ? "Update saved." : "Update added.");

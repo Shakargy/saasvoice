@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Trash2, Loader2 } from "lucide-react";
 
+import { apiSend } from "@/lib/client";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,10 +26,12 @@ export function DeleteUpdateButton({ id }: { id: string }) {
   async function onDelete() {
     setDeleting(true);
     try {
-      const res = await fetch(`/api/updates/${id}`, { method: "DELETE" });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        toast.error(data.error ?? "Could not delete update.");
+      const { ok, data } = await apiSend<{ error?: string }>(
+        `/api/updates/${id}`,
+        "DELETE"
+      );
+      if (!ok) {
+        toast.error(data?.error ?? "Could not delete update.");
         return;
       }
       toast.success("Update deleted.");
