@@ -260,7 +260,7 @@ export default function LandingPage() {
               <PricingLine>Content queue & planning</PricingLine>
               <PricingLine>Direct posting integrations</PricingLine>
               <Button disabled variant="outline" className="mt-3 w-full">
-                Not yet available
+                Coming soon
               </Button>
             </CardContent>
           </Card>
