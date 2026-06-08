@@ -19,7 +19,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
-        const user = await prisma.user.findUnique({ where: { email } });
+        // Match the normalization used at registration so logins are
+        // case-insensitive on the email.
+        const user = await prisma.user.findUnique({
+          where: { email: email.toLowerCase() },
+        });
         if (!user?.passwordHash) return null;
 
         const passwordMatches = await bcrypt.compare(
