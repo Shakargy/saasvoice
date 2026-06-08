@@ -1,9 +1,40 @@
+import { readFileSync } from "node:fs";
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 import { scorePost } from "../src/lib/ai/scoring";
 
+// Load .env if present (tsx doesn't auto-load it). In production the env vars
+// are already set by Docker/compose, so a missing .env is fine.
+loadDotEnv();
+
 const prisma = new PrismaClient();
+
+/** Minimal .env loader: sets any KEY=value pairs not already in process.env. */
+function loadDotEnv(path = ".env") {
+  let content: string;
+  try {
+    content = readFileSync(path, "utf8");
+  } catch {
+    return; // No .env — rely on the existing environment.
+  }
+  for (const line of content.split("\n")) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    // Strip surrounding quotes.
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (!(key in process.env)) process.env[key] = value;
+  }
+}
 
 /**
  * Seeds a demo account so the app is explorable immediately.

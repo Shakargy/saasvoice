@@ -11,7 +11,14 @@ import { ExportButton } from "@/components/posts/export-button";
 
 export const metadata: Metadata = { title: "Posts" };
 
-const TABS = ["all", "draft", "approved", "queued", "archived"] as const;
+const TABS = [
+  "all",
+  "draft",
+  "approved",
+  "queued",
+  "posted_manually",
+  "archived",
+] as const;
 
 export default async function PostsPage({
   searchParams,
@@ -27,9 +34,7 @@ export default async function PostsPage({
     : "all";
 
   const where =
-    active === "all"
-      ? { userId }
-      : { userId, status: active === "queued" ? "queued" : active };
+    active === "all" ? { userId } : { userId, status: active };
 
   const posts = await prisma.generatedPost.findMany({
     where,

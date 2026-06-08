@@ -9,6 +9,7 @@ const TABS = [
   { key: "draft", label: "Drafts" },
   { key: "approved", label: "Approved" },
   { key: "queued", label: "Queued" },
+  { key: "posted_manually", label: "Posted" },
   { key: "archived", label: "Archived" },
 ];
 
